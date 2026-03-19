@@ -19,6 +19,8 @@ struct ResponseActionsView: View {
             .padding(.vertical, 7)
             .background(buttonBackground, in: Capsule())
             .foregroundStyle(isHovering ? .primary : .secondary)
+            .scaleEffect(isHovering ? 1 : 0.98)
+            .animation(.easeOut(duration: 0.16), value: isHovering)
         }
     }
 
