@@ -6,160 +6,153 @@ struct MessageCardView: View {
     @State private var hasAppeared = false
 
     var body: some View {
-        HStack {
+        Group {
             if message.role == .assistant {
-                card
-                Spacer(minLength: 72)
+                assistantRow
             } else {
-                Spacer(minLength: 120)
-                card
+                userRow
             }
         }
-        .offset(y: hasAppeared ? 0 : 8)
+        .offset(y: hasAppeared ? 0 : 10)
         .opacity(hasAppeared ? 1 : 0)
         .onAppear {
-            withAnimation(.spring(response: 0.34, dampingFraction: 0.9)) {
+            withAnimation(.spring(response: 0.36, dampingFraction: 0.86)) {
                 hasAppeared = true
             }
         }
     }
 
-    private var card: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(message.role == .assistant ? "CoreAI" : "You")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
+    // MARK: - Assistant row (Claude-style: avatar left, text right, no card)
 
-                Spacer()
+    private var assistantRow: some View {
+        HStack(alignment: .top, spacing: 12) {
+            // Avatar orb
+            assistantAvatar
 
-                if message.role == .assistant, let metadata = message.metadata {
-                    Text(metadata.createdAtText)
+            VStack(alignment: .leading, spacing: 8) {
+                // Message content
+                messageContent
+
+                // Error
+                if case .error(let errorText) = message.state {
+                    Text(errorText)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.red.opacity(0.72))
                 }
-            }
 
-            messageContent
-
-            if case .error(let errorText) = message.state {
-                Text(errorText)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else if message.role == .assistant, let metadata = message.metadata {
-                HStack(spacing: 12) {
-                    metadataItem("Model", metadata.model)
-                    metadataItem("Duration", metadata.totalDurationText)
-                    metadataItem("Eval", metadata.evalCountText)
-                    Spacer()
-                    if !message.text.isEmpty {
-                        ResponseActionsView(
-                            text: message.text,
-                            isHovering: isHovering
-                        )
+                // Metadata + action row
+                if let metadata = message.metadata, message.role == .assistant {
+                    HStack(spacing: 10) {
+                        metadataRow(metadata)
+                        Spacer()
+                        if !message.text.isEmpty {
+                            ResponseActionsView(text: message.text, isHovering: isHovering)
+                        }
                     }
                 }
             }
+            .frame(maxWidth: 860, alignment: .leading)
+
+            Spacer(minLength: 40)
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 16)
-        .frame(maxWidth: message.role == .assistant ? 800 : 500, alignment: .leading)
-        .background(cardBackground)
-        .overlay(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .strokeBorder(Color.white.opacity(message.role == .assistant ? 0.08 : 0.04), lineWidth: 1)
-        )
-        .shadow(color: Color.black.opacity(message.role == .assistant ? 0.14 : 0.06), radius: 14, y: 6)
-        .scaleEffect(isHovering && message.role == .assistant ? 1.004 : 1)
         .onHover { hovering in
-            withAnimation(.easeOut(duration: 0.16)) {
-                isHovering = hovering
-            }
+            withAnimation(.easeOut(duration: 0.16)) { isHovering = hovering }
         }
     }
 
-    private var cardBackground: some View {
-        RoundedRectangle(cornerRadius: 22, style: .continuous)
-            .fill(backgroundStyle)
-            .overlay(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(message.role == .assistant ? 0.065 : 0.03),
-                                message.role == .assistant ? Color.cyan.opacity(0.015) : Color.blue.opacity(0.02),
-                                Color.clear
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+    // MARK: - User row (ChatGPT-style: pill bubble, right-aligned)
+
+    private var userRow: some View {
+        HStack {
+            Spacer(minLength: 80)
+            Text(message.text.isEmpty ? " " : message.text)
+                .font(.body.weight(.regular))
+                .foregroundStyle(.white)
+                .lineSpacing(3)
+                .textSelection(.enabled)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 13)
+                .background(userBubbleBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.18), radius: 10, y: 4)
+                .frame(maxWidth: 640, alignment: .trailing)
+        }
+    }
+
+    // MARK: - Sub-views
+
+    private var assistantAvatar: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    AngularGradient(
+                        colors: [Color.cyan, Color.blue, Color.indigo, Color.cyan],
+                        center: .center
                     )
-            )
-    }
-
-    private var backgroundStyle: AnyShapeStyle {
-        if message.role == .assistant {
-            return AnyShapeStyle(.regularMaterial)
+                )
+                .frame(width: 32, height: 32)
+            Image(systemName: "sparkle")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.white)
         }
-        return AnyShapeStyle(
-            LinearGradient(
-                colors: [
-                    Color.blue.opacity(0.10),
-                    Color.indigo.opacity(0.07)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
+        .shadow(color: Color.cyan.opacity(0.30), radius: 8, y: 2)
     }
 
     @ViewBuilder
     private var messageContent: some View {
         if message.state == .loading {
-            VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
                 LoadingIndicatorView(title: "Thinking")
-                Text("Preparing the response.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
             }
+            .padding(.top, 4)
         } else if message.state == .streaming && message.text.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
-                LoadingIndicatorView(title: "Generating")
-                Text("Writing the response now.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            LoadingIndicatorView(title: "Writing")
+                .padding(.top, 4)
         } else if message.role == .assistant {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(message.text.isEmpty ? " " : message.text)
-                    .font(.system(size: 15, weight: .regular, design: .default))
+                    .font(.system(size: 15, weight: .regular))
                     .foregroundStyle(.primary)
-                    .lineSpacing(4)
+                    .lineSpacing(5)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 if message.state == .streaming {
                     LoadingIndicatorView(title: "Generating")
-                        .transition(.opacity)
+                        .transition(.opacity.combined(with: .scale(scale: 0.92)))
                 }
             }
-        } else {
-            Text(message.text.isEmpty ? " " : message.text)
-                .font(.body.weight(.medium))
-                .foregroundStyle(.white.opacity(0.95))
-                .lineSpacing(3)
-                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
-    private func metadataItem(_ title: String, _ value: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(title)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-            Text(value)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+    private var userBubbleBackground: some View {
+        RoundedRectangle(cornerRadius: 22, style: .continuous)
+            .fill(
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.12, green: 0.14, blue: 0.26),
+                        Color(red: 0.09, green: 0.10, blue: 0.20)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+    }
+
+    private func metadataRow(_ metadata: ChatMessageMetadata) -> some View {
+        HStack(spacing: 10) {
+            metaChip(metadata.model)
+            metaChip(metadata.totalDurationText)
+            metaChip(metadata.evalCountText + " tok")
         }
+    }
+
+    private func metaChip(_ value: String) -> some View {
+        Text(value)
+            .font(.caption2.monospacedDigit())
+            .foregroundStyle(.secondary.opacity(0.7))
     }
 }

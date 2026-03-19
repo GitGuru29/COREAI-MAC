@@ -4,27 +4,38 @@ struct LoadingIndicatorView: View {
     let title: String
     @State private var phase = 0
 
+    private let barCount = 4
+    private let heights: [CGFloat] = [6, 10, 14, 10]
+
     var body: some View {
-        HStack(spacing: 9) {
-            HStack(spacing: 5) {
-                ForEach(0..<3, id: \.self) { index in
-                    Circle()
-                        .fill(Color.secondary.opacity(phase == index ? 0.9 : 0.35))
-                        .frame(width: phase == index ? 7 : 6, height: phase == index ? 7 : 6)
-                        .animation(.easeInOut(duration: 0.22), value: phase)
+        HStack(spacing: 6) {
+            // Gemini-style animated wave bars
+            HStack(spacing: 3) {
+                ForEach(0..<barCount, id: \.self) { index in
+                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.cyan, Color.blue, Color.indigo],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .frame(width: 3, height: phase == index ? 16 : heights[index])
+                        .animation(
+                            .easeInOut(duration: 0.30).delay(Double(index) * 0.07),
+                            value: phase
+                        )
                 }
             }
+
             Text(title)
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.secondary)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(Color.primary.opacity(0.05), in: Capsule())
         .task {
             while !Task.isCancelled {
-                phase = (phase + 1) % 3
-                try? await Task.sleep(nanoseconds: 300_000_000)
+                phase = (phase + 1) % barCount
+                try? await Task.sleep(nanoseconds: 280_000_000)
             }
         }
     }

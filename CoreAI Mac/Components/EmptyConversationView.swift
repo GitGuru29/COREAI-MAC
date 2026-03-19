@@ -2,77 +2,104 @@ import SwiftUI
 
 struct EmptyConversationView: View {
     var body: some View {
-        VStack(spacing: 22) {
-            ZStack {
-                Circle()
-                    .fill(.regularMaterial)
-                    .frame(width: 102, height: 102)
-                    .overlay(
-                        Circle()
-                            .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
-                    )
-                    .shadow(color: Color.cyan.opacity(0.16), radius: 18, y: 4)
+        VStack(spacing: 36) {
+            Spacer()
 
-                Circle()
-                    .strokeBorder(
-                        LinearGradient(
-                            colors: [
-                                Color.cyan.opacity(0.45),
-                                Color.clear
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
-                    .frame(width: 122, height: 122)
-                    .blur(radius: 0.5)
+            // Animated orb logo
+            CoreAILogoMark(size: 88)
 
-                Image(systemName: "sparkles.rectangle.stack.fill")
-                    .font(.system(size: 34, weight: .medium))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [
-                                .white.opacity(0.92),
-                                .secondary.opacity(0.72)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-            }
-
-            VStack(spacing: 8) {
-                Text("Start Building With CoreAI")
-                    .font(.system(size: 30, weight: .bold, design: .rounded))
+            // Headline + subtitle (Claude-style direct)
+            VStack(spacing: 10) {
+                Text("What can I help with?")
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
                     .multilineTextAlignment(.center)
 
-                Text("Ask for code, architecture help, debugging, or analysis. Long responses stream directly into this workspace while your local backend runs.")
-                    .font(.body.weight(.regular))
+                Text("Powered by your local Ollama backend. Ask anything.")
+                    .font(.callout)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
-                    .frame(maxWidth: 520)
             }
 
-            HStack(spacing: 10) {
-                hintPill("Sample apps")
-                hintPill("Refactors")
-                hintPill("Code reviews")
+            // 2×2 Suggestion card grid (Claude-style)
+            let suggestions: [(icon: String, title: String, subtitle: String, accent: Color)] = [
+                ("hammer.fill",         "Build something",   "Start a new app, component, or module",        .cyan),
+                ("ant.fill",            "Debug & fix",       "Diagnose errors, crashes, and logic bugs",      .orange),
+                ("doc.text.magnifyingglass", "Review code",  "Architecture, style, and best-practice review", .indigo),
+                ("pencil.and.sparkles", "Write & explain",   "Docs, commit messages, and plain explanations", .purple),
+            ]
+
+            LazyVGrid(
+                columns: [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)],
+                spacing: 14
+            ) {
+                ForEach(suggestions, id: \.title) { s in
+                    SuggestionCard(icon: s.icon, title: s.title, subtitle: s.subtitle, accent: s.accent)
+                }
             }
+            .frame(maxWidth: 580)
+
+            Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, 40)
     }
+}
 
-    private func hintPill(_ text: String) -> some View {
-        Text(text)
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 7)
-            .background(Color.white.opacity(0.04), in: Capsule())
-            .overlay(
-                Capsule()
-                    .strokeBorder(Color.white.opacity(0.05), lineWidth: 1)
-            )
+private struct SuggestionCard: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+    let accent: Color
+    @State private var isHovering = false
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(accent.opacity(0.12))
+                    .frame(width: 36, height: 36)
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(accent)
+            }
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                    .foregroundStyle(.primary)
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(.regularMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [accent.opacity(isHovering ? 0.07 : 0.03), Color.clear],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(
+                    isHovering ? accent.opacity(0.28) : Color.white.opacity(0.07),
+                    lineWidth: 1
+                )
+        )
+        .scaleEffect(isHovering ? 1.025 : 1)
+        .shadow(color: isHovering ? accent.opacity(0.12) : Color.black.opacity(0.06), radius: isHovering ? 14 : 8, y: 4)
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isHovering)
+        .onHover { isHovering = $0 }
     }
 }
