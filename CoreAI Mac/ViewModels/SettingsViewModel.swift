@@ -7,6 +7,7 @@ final class SettingsViewModel: ObservableObject {
     @Published var apiKey = ""
     @Published var preferredModel = AppSettings.defaultPreferredModel
     @Published var streamingEnabledByDefault = AppSettings.defaultStreamingEnabledByDefault
+    @Published var automaticModelRoutingEnabled = AppSettings.defaultAutomaticModelRoutingEnabled
     @Published var isTestingConnection = false
     @Published var isSaving = false
     @Published var testResult: ConnectionTestResult?
@@ -16,15 +17,18 @@ final class SettingsViewModel: ObservableObject {
     private let coreAIService: CoreAIService
     private let settingsStore: SettingsStore
     private let keychainService: KeychainService
+    private let connectionMonitorService: ConnectionMonitorService
 
     init(
         coreAIService: CoreAIService,
         settingsStore: SettingsStore,
-        keychainService: KeychainService
+        keychainService: KeychainService,
+        connectionMonitorService: ConnectionMonitorService
     ) {
         self.coreAIService = coreAIService
         self.settingsStore = settingsStore
         self.keychainService = keychainService
+        self.connectionMonitorService = connectionMonitorService
         load()
     }
 
@@ -33,6 +37,7 @@ final class SettingsViewModel: ObservableObject {
         baseURL = settings.baseURL
         preferredModel = settings.preferredModel
         streamingEnabledByDefault = settings.streamingEnabledByDefault
+        automaticModelRoutingEnabled = settings.automaticModelRoutingEnabled
         do {
             apiKey = try keychainService.readAPIKey() ?? ""
         } catch {
@@ -46,6 +51,7 @@ final class SettingsViewModel: ObservableObject {
 
         do {
             try persistInputs()
+            connectionMonitorService.reconnectSoon()
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
@@ -61,6 +67,7 @@ final class SettingsViewModel: ObservableObject {
 
         do {
             try persistInputs()
+            connectionMonitorService.reconnectSoon()
             let includeProtectedCheck = !apiKey.trimmed.isEmpty
             let result = try await coreAIService.testConnection(includeProtectedCheck: includeProtectedCheck)
             testResult = result
@@ -84,6 +91,7 @@ final class SettingsViewModel: ObservableObject {
         settingsStore.saveBaseURL(baseURL.trimmed.isEmpty ? AppSettings.defaultBaseURL : baseURL.trimmed)
         settingsStore.savePreferredModel(preferredModel.trimmed.isEmpty ? AppSettings.defaultPreferredModel : preferredModel.trimmed)
         settingsStore.saveStreamingEnabledByDefault(streamingEnabledByDefault)
+        settingsStore.saveAutomaticModelRoutingEnabled(automaticModelRoutingEnabled)
 
         if apiKey.trimmed.isEmpty {
             try keychainService.deleteAPIKey()

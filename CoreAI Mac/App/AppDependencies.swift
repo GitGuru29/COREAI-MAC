@@ -7,6 +7,7 @@ final class AppDependencies: ObservableObject {
     let settingsStore: SettingsStore
     let apiClient: APIClient
     let coreAIService: CoreAIService
+    let connectionMonitorService: ConnectionMonitorService
 
     init() {
         let keychainService = DefaultKeychainService()
@@ -19,6 +20,8 @@ final class AppDependencies: ObservableObject {
         self.keychainService = keychainService
         self.settingsStore = settingsStore
         self.apiClient = apiClient
-        self.coreAIService = DefaultCoreAIService(apiClient: apiClient)
+        let coreAIService = DefaultCoreAIService(apiClient: apiClient)
+        self.coreAIService = coreAIService
+        self.connectionMonitorService = DefaultConnectionMonitorService(coreAIService: coreAIService)
     }
 }

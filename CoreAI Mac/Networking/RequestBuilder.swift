@@ -7,6 +7,29 @@ struct RequestBuilder {
     let keychainService: KeychainService
 
     func build<Response: Decodable>(for endpoint: APIEndpoint<Response>) throws -> URLRequest {
+        try buildRequest(
+            path: endpoint.path,
+            method: endpoint.method,
+            requiresAuth: endpoint.requiresAuth,
+            body: endpoint.body
+        )
+    }
+
+    func build<Response: Decodable>(for endpoint: APIStreamingEndpoint<Response>) throws -> URLRequest {
+        try buildRequest(
+            path: endpoint.path,
+            method: endpoint.method,
+            requiresAuth: endpoint.requiresAuth,
+            body: endpoint.body
+        )
+    }
+
+    private func buildRequest(
+        path: String,
+        method: HTTPMethod,
+        requiresAuth: Bool,
+        body: Data?
+    ) throws -> URLRequest {
         let settings = settingsStore.loadSettings()
         let trimmedBaseURL = settings.baseURL.trimmed
 
@@ -17,23 +40,23 @@ struct RequestBuilder {
             throw APIError.invalidBaseURL
         }
 
-        components.path = endpoint.path
+        components.path = path
 
         guard let finalURL = components.url else {
             throw APIError.invalidBaseURL
         }
 
         var request = URLRequest(url: finalURL)
-        request.httpMethod = endpoint.method.rawValue
-        request.httpBody = endpoint.body
+        request.httpMethod = method.rawValue
+        request.httpBody = body
         request.timeoutInterval = Self.requestTimeout
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
-        if endpoint.body != nil {
+        if body != nil {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         }
 
-        if endpoint.requiresAuth {
+        if requiresAuth {
             guard let apiKey = try keychainService.readAPIKey(), !apiKey.trimmed.isEmpty else {
                 throw APIError.missingAPIKey
             }

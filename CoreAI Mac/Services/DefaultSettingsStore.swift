@@ -5,6 +5,7 @@ final class DefaultSettingsStore: SettingsStore {
         static let baseURL = "settings.baseURL"
         static let preferredModel = "settings.preferredModel"
         static let streamingEnabledByDefault = "settings.streamingEnabledByDefault"
+        static let automaticModelRoutingEnabled = "settings.automaticModelRoutingEnabled"
     }
 
     private let userDefaults: UserDefaults
@@ -18,7 +19,8 @@ final class DefaultSettingsStore: SettingsStore {
         AppSettings(
             baseURL: userDefaults.string(forKey: Keys.baseURL) ?? AppSettings.defaultBaseURL,
             preferredModel: userDefaults.string(forKey: Keys.preferredModel) ?? AppSettings.defaultPreferredModel,
-            streamingEnabledByDefault: userDefaults.object(forKey: Keys.streamingEnabledByDefault) as? Bool ?? AppSettings.defaultStreamingEnabledByDefault
+            streamingEnabledByDefault: userDefaults.object(forKey: Keys.streamingEnabledByDefault) as? Bool ?? AppSettings.defaultStreamingEnabledByDefault,
+            automaticModelRoutingEnabled: userDefaults.object(forKey: Keys.automaticModelRoutingEnabled) as? Bool ?? AppSettings.defaultAutomaticModelRoutingEnabled
         )
     }
 
@@ -34,11 +36,16 @@ final class DefaultSettingsStore: SettingsStore {
         userDefaults.set(value, forKey: Keys.streamingEnabledByDefault)
     }
 
+    func saveAutomaticModelRoutingEnabled(_ value: Bool) {
+        userDefaults.set(value, forKey: Keys.automaticModelRoutingEnabled)
+    }
+
     private func registerDefaults() {
         userDefaults.register(defaults: [
             Keys.baseURL: AppSettings.defaultBaseURL,
             Keys.preferredModel: AppSettings.defaultPreferredModel,
-            Keys.streamingEnabledByDefault: AppSettings.defaultStreamingEnabledByDefault
+            Keys.streamingEnabledByDefault: AppSettings.defaultStreamingEnabledByDefault,
+            Keys.automaticModelRoutingEnabled: AppSettings.defaultAutomaticModelRoutingEnabled
         ])
     }
 }

@@ -31,6 +31,8 @@ struct DashboardView: View {
                         }
 
                         InfoCard(title: "Connection") {
+                            LabeledValueRow(label: "Base URL", value: viewModel.baseURL)
+                            LabeledValueRow(label: "Status", value: viewModel.connectionSnapshot.message)
                             LabeledValueRow(label: "Health", value: viewModel.healthStatus?.status.capitalized ?? "Unknown")
                             LabeledValueRow(label: "Ollama", value: viewModel.healthStatus?.ollamaStatus ?? "Unknown")
                             LabeledValueRow(label: "Auth Enabled", value: (viewModel.serverInfo?.authEnabled ?? false) ? "Yes" : "No")

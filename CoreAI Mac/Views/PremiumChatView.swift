@@ -15,13 +15,20 @@ struct PremiumChatView: View {
                 ChatToolbarView(
                     selectedModel: $viewModel.selectedModel,
                     temperature: $viewModel.temperature,
+                    automaticRoutingEnabled: $viewModel.automaticModelRoutingEnabled,
                     availableModels: viewModel.availableModels,
                     isLoadingModels: viewModel.isLoadingModels,
+                    canRetryLastRequest: viewModel.canRetryLastRequest,
+                    routingDecisionTitle: viewModel.lastRoutingDecision.map { "\($0.category.displayTitle) -> \($0.model)" },
                     onModelChanged: viewModel.persistSelectedModel,
                     onReloadModels: {
                         Task { await viewModel.refreshModels() }
                     },
-                    onClearConversation: viewModel.clearConversation
+                    onClearConversation: viewModel.clearConversation,
+                    onRetryLastRequest: {
+                        Task { await viewModel.retryLastRequest() }
+                    },
+                    onAutomaticRoutingChanged: viewModel.setAutomaticModelRoutingEnabled
                 )
                 .frame(maxWidth: contentMaxWidth)
 

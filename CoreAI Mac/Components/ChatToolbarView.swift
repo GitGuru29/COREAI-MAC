@@ -3,11 +3,16 @@ import SwiftUI
 struct ChatToolbarView: View {
     @Binding var selectedModel: String
     @Binding var temperature: Double
+    @Binding var automaticRoutingEnabled: Bool
     let availableModels: [ModelInfo]
     let isLoadingModels: Bool
+    let canRetryLastRequest: Bool
+    let routingDecisionTitle: String?
     let onModelChanged: () -> Void
     let onReloadModels: () -> Void
     let onClearConversation: () -> Void
+    let onRetryLastRequest: () -> Void
+    let onAutomaticRoutingChanged: (Bool) -> Void
 
     var body: some View {
         HStack(spacing: 12) {
@@ -46,6 +51,27 @@ struct ChatToolbarView: View {
             Spacer(minLength: 0)
 
             toolbarCluster {
+                Toggle(isOn: $automaticRoutingEnabled) {
+                    Text("Auto Route")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+                .toggleStyle(.switch)
+                .controlSize(.small)
+                .onChange(of: automaticRoutingEnabled) { _, newValue in
+                    onAutomaticRoutingChanged(newValue)
+                }
+            }
+
+            if let routingDecisionTitle {
+                toolbarCluster {
+                    Label(routingDecisionTitle, systemImage: "point.topleft.down.curvedto.point.bottomright.up")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            toolbarCluster {
                 Button {
                     onReloadModels()
                 } label: {
@@ -53,6 +79,14 @@ struct ChatToolbarView: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(isLoadingModels)
+
+                if canRetryLastRequest {
+                    Divider()
+                        .frame(height: 16)
+
+                    Button("Retry", action: onRetryLastRequest)
+                        .buttonStyle(.plain)
+                }
 
                 Divider()
                     .frame(height: 16)
