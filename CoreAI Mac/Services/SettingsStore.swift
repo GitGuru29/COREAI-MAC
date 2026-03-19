@@ -5,4 +5,5 @@ protocol SettingsStore {
     func saveBaseURL(_ value: String)
     func savePreferredModel(_ value: String)
     func saveStreamingEnabledByDefault(_ value: Bool)
+    func saveAutomaticModelRoutingEnabled(_ value: Bool)
 }

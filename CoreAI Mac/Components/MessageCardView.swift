@@ -3,6 +3,7 @@ import SwiftUI
 struct MessageCardView: View {
     let message: ChatMessage
     @State private var isHovering = false
+    @State private var hasAppeared = false
 
     var body: some View {
         HStack {
@@ -14,11 +15,17 @@ struct MessageCardView: View {
                 card
             }
         }
-        .transition(.asymmetric(insertion: .opacity.combined(with: .move(edge: .bottom)), removal: .opacity))
+        .offset(y: hasAppeared ? 0 : 8)
+        .opacity(hasAppeared ? 1 : 0)
+        .onAppear {
+            withAnimation(.spring(response: 0.34, dampingFraction: 0.9)) {
+                hasAppeared = true
+            }
+        }
     }
 
     private var card: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 Text(message.role == .assistant ? "CoreAI" : "You")
                     .font(.subheadline.weight(.semibold))
@@ -26,7 +33,7 @@ struct MessageCardView: View {
 
                 Spacer()
 
-                if let metadata = message.metadata {
+                if message.role == .assistant, let metadata = message.metadata {
                     Text(metadata.createdAtText)
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -39,13 +46,13 @@ struct MessageCardView: View {
                 Text(errorText)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-            } else if let metadata = message.metadata {
-                HStack(spacing: 14) {
+            } else if message.role == .assistant, let metadata = message.metadata {
+                HStack(spacing: 12) {
                     metadataItem("Model", metadata.model)
                     metadataItem("Duration", metadata.totalDurationText)
                     metadataItem("Eval", metadata.evalCountText)
                     Spacer()
-                    if message.role == .assistant && !message.text.isEmpty {
+                    if !message.text.isEmpty {
                         ResponseActionsView(
                             text: message.text,
                             isHovering: isHovering
@@ -54,29 +61,33 @@ struct MessageCardView: View {
                 }
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 18)
-        .frame(maxWidth: message.role == .assistant ? 860 : 620, alignment: .leading)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 16)
+        .frame(maxWidth: message.role == .assistant ? 800 : 500, alignment: .leading)
         .background(cardBackground)
         .overlay(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .strokeBorder(Color.white.opacity(message.role == .assistant ? 0.08 : 0.05), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .strokeBorder(Color.white.opacity(message.role == .assistant ? 0.08 : 0.04), lineWidth: 1)
         )
-        .shadow(color: Color.black.opacity(message.role == .assistant ? 0.16 : 0.08), radius: 16, y: 8)
+        .shadow(color: Color.black.opacity(message.role == .assistant ? 0.14 : 0.06), radius: 14, y: 6)
+        .scaleEffect(isHovering && message.role == .assistant ? 1.004 : 1)
         .onHover { hovering in
-            isHovering = hovering
+            withAnimation(.easeOut(duration: 0.16)) {
+                isHovering = hovering
+            }
         }
     }
 
     private var cardBackground: some View {
-        RoundedRectangle(cornerRadius: 24, style: .continuous)
+        RoundedRectangle(cornerRadius: 22, style: .continuous)
             .fill(backgroundStyle)
             .overlay(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(message.role == .assistant ? 0.06 : 0.03),
+                                Color.white.opacity(message.role == .assistant ? 0.065 : 0.03),
+                                message.role == .assistant ? Color.cyan.opacity(0.015) : Color.blue.opacity(0.02),
                                 Color.clear
                             ],
                             startPoint: .topLeading,
@@ -90,26 +101,52 @@ struct MessageCardView: View {
         if message.role == .assistant {
             return AnyShapeStyle(.regularMaterial)
         }
-        return AnyShapeStyle(Color.primary.opacity(0.06))
+        return AnyShapeStyle(
+            LinearGradient(
+                colors: [
+                    Color.blue.opacity(0.10),
+                    Color.indigo.opacity(0.07)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
     }
 
     @ViewBuilder
     private var messageContent: some View {
         if message.state == .loading {
-            LoadingIndicatorView(title: "Thinking…")
+            VStack(alignment: .leading, spacing: 8) {
+                LoadingIndicatorView(title: "Thinking")
+                Text("Preparing the response.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         } else if message.state == .streaming && message.text.isEmpty {
-            LoadingIndicatorView(title: "Streaming…")
+            VStack(alignment: .leading, spacing: 8) {
+                LoadingIndicatorView(title: "Generating")
+                Text("Writing the response now.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         } else if message.role == .assistant {
-            Text(message.text.isEmpty ? " " : message.text)
-                .font(.system(size: 15.5, weight: .regular, design: .default))
-                .foregroundStyle(.primary)
-                .lineSpacing(4)
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(alignment: .leading, spacing: 8) {
+                Text(message.text.isEmpty ? " " : message.text)
+                    .font(.system(size: 15, weight: .regular, design: .default))
+                    .foregroundStyle(.primary)
+                    .lineSpacing(4)
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                if message.state == .streaming {
+                    LoadingIndicatorView(title: "Generating")
+                        .transition(.opacity)
+                }
+            }
         } else {
             Text(message.text.isEmpty ? " " : message.text)
                 .font(.body.weight(.medium))
-                .foregroundStyle(.primary)
+                .foregroundStyle(.white.opacity(0.95))
                 .lineSpacing(3)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }

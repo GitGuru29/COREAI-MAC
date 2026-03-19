@@ -20,9 +20,19 @@ struct SettingsView: View {
                     TextField("Preferred Model", text: $viewModel.preferredModel)
                         .textFieldStyle(.roundedBorder)
 
-                    Toggle("Enable Streaming By Default (Phase 2 placeholder)", isOn: $viewModel.streamingEnabledByDefault)
+                    Toggle("Stream Responses For Long Tasks", isOn: $viewModel.streamingEnabledByDefault)
+
+                    Toggle("Enable Automatic Model Routing", isOn: $viewModel.automaticModelRoutingEnabled)
                 }
                 .formStyle(.grouped)
+
+                Text("Automatic routing uses `llama3.2:latest` for general chat and switches to `qwen2.5-coder:7b` for development or code-heavy prompts when those models are installed.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                Text("Default hostname: `https://coreai-local.local`. This client is designed for the trusted hostname deployment path and does not use insecure TLS exceptions.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
 
                 HStack {
                     Button("Save Settings") {

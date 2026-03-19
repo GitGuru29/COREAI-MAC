@@ -42,6 +42,58 @@ final class APIClient {
         }
     }
 
+    func stream<Response: Decodable>(
+        _ endpoint: APIStreamingEndpoint<Response>
+    ) throws -> AsyncThrowingStream<Response, Error> {
+        let builder = RequestBuilder(
+            settingsStore: settingsStore,
+            keychainService: keychainService
+        )
+        let request = try builder.build(for: endpoint)
+
+        return AsyncThrowingStream { continuation in
+            let task = Task {
+                do {
+                    let (bytes, response) = try await session.bytes(for: request)
+
+                    guard let httpResponse = response as? HTTPURLResponse else {
+                        throw APIError.invalidResponse
+                    }
+
+                    guard (200...299).contains(httpResponse.statusCode) else {
+                        var buffer = Data()
+                        for try await byte in bytes {
+                            buffer.append(byte)
+                        }
+                        let backendError = try? decoder.decode(BackendErrorResponse.self, from: buffer)
+                        throw APIError.map(statusCode: httpResponse.statusCode, backend: backendError)
+                    }
+
+                    for try await line in bytes.lines {
+                        try Task.checkCancellation()
+                        if let payload: Response = try SSEParser.parseDataLine(line, decoder: decoder) {
+                            continuation.yield(payload)
+                        }
+                    }
+
+                    continuation.finish()
+                } catch is CancellationError {
+                    continuation.finish()
+                } catch let error as APIError {
+                    continuation.finish(throwing: error)
+                } catch let error as URLError where error.code == .timedOut {
+                    continuation.finish(throwing: APIError.requestTimedOut)
+                } catch {
+                    continuation.finish(throwing: APIError.transportError(error.localizedDescription))
+                }
+            }
+
+            continuation.onTermination = { _ in
+                task.cancel()
+            }
+        }
+    }
+
     private func decodeResponse<Response: Decodable>(data: Data, response: URLResponse) throws -> Response {
         guard let httpResponse = response as? HTTPURLResponse else {
             throw APIError.invalidResponse

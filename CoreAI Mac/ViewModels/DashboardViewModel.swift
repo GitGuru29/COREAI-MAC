@@ -5,13 +5,29 @@ import Foundation
 final class DashboardViewModel: ObservableObject {
     @Published var healthStatus: HealthStatus?
     @Published var serverInfo: ServerInfo?
+    @Published var connectionSnapshot: ConnectionMonitorSnapshot = .idle
+    @Published var baseURL = AppSettings.defaultBaseURL
     @Published var isLoading = false
     @Published var errorMessage: String?
 
     private let coreAIService: CoreAIService
+    private let settingsStore: SettingsStore
+    private var cancellables: Set<AnyCancellable> = []
 
-    init(coreAIService: CoreAIService) {
+    init(
+        coreAIService: CoreAIService,
+        settingsStore: SettingsStore,
+        connectionMonitorService: ConnectionMonitorService
+    ) {
         self.coreAIService = coreAIService
+        self.settingsStore = settingsStore
+        baseURL = settingsStore.loadSettings().baseURL
+        connectionMonitorService.snapshotPublisher
+            .receive(on: RunLoop.main)
+            .sink { [weak self] snapshot in
+                self?.connectionSnapshot = snapshot
+            }
+            .store(in: &cancellables)
     }
 
     func load() async {
@@ -21,6 +37,7 @@ final class DashboardViewModel: ObservableObject {
     }
 
     func refresh() async {
+        baseURL = settingsStore.loadSettings().baseURL
         isLoading = true
         errorMessage = nil
 
@@ -37,26 +54,47 @@ final class DashboardViewModel: ObservableObject {
     }
 
     var bannerStyle: ConnectionBannerStyle {
-        if let healthStatus {
-            return healthStatus.isHealthy ? .healthy : .warning
+        switch connectionSnapshot.state {
+        case .connected:
+            if let healthStatus {
+                return healthStatus.isHealthy ? .healthy : .warning
+            }
+            return .healthy
+        case .checking, .reconnecting, .idle:
+            return .warning
+        case .disconnected:
+            return .failed
         }
-        return errorMessage == nil ? .warning : .failed
     }
 
     var bannerTitle: String {
-        if let healthStatus {
-            return healthStatus.isHealthy ? "Connected" : "Connected With Warnings"
+        switch connectionSnapshot.state {
+        case .connected:
+            if let healthStatus {
+                return healthStatus.isHealthy ? "Connected" : "Connected With Warnings"
+            }
+            return "Connected"
+        case .checking:
+            return "Checking Connection"
+        case .reconnecting:
+            return "Reconnecting"
+        case .disconnected:
+            return "Connection Failed"
+        case .idle:
+            return "Waiting To Check"
         }
-        return errorMessage == nil ? "Checking Connection" : "Connection Failed"
     }
 
     var bannerMessage: String {
+        if connectionSnapshot.state == .disconnected || connectionSnapshot.state == .reconnecting {
+            return connectionSnapshot.message
+        }
         if let errorMessage {
             return errorMessage
         }
         if let healthStatus {
             return "Service: \(healthStatus.service) • Ollama: \(healthStatus.ollamaStatus)"
         }
-        return "Checking server health and configuration."
+        return connectionSnapshot.message
     }
 }

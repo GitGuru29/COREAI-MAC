@@ -4,6 +4,8 @@ enum AppRoute: String, CaseIterable, Identifiable, Hashable {
     case dashboard
     case models
     case chat
+    case summarize
+    case analyzeCode
     case settings
 
     var id: String { rawValue }
@@ -16,6 +18,10 @@ enum AppRoute: String, CaseIterable, Identifiable, Hashable {
             return "Models"
         case .chat:
             return "Chat"
+        case .summarize:
+            return "Summarize"
+        case .analyzeCode:
+            return "Analyze Code"
         case .settings:
             return "Settings"
         }
@@ -29,6 +35,10 @@ enum AppRoute: String, CaseIterable, Identifiable, Hashable {
             return "shippingbox"
         case .chat:
             return "message"
+        case .summarize:
+            return "text.redaction"
+        case .analyzeCode:
+            return "chevron.left.forwardslash.chevron.right"
         case .settings:
             return "gearshape"
         }

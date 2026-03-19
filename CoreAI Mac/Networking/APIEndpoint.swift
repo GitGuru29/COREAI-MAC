@@ -24,3 +24,15 @@ extension APIEndpoint where Response == ChatResponse {
         APIEndpoint(path: "/chat", method: .post, requiresAuth: true, body: body)
     }
 }
+
+extension APIEndpoint where Response == SummarizeResponse {
+    static func summarize(body: Data) -> APIEndpoint<SummarizeResponse> {
+        APIEndpoint(path: "/summarize", method: .post, requiresAuth: true, body: body)
+    }
+}
+
+extension APIEndpoint where Response == AnalyzeCodeResponse {
+    static func analyzeCode(body: Data) -> APIEndpoint<AnalyzeCodeResponse> {
+        APIEndpoint(path: "/analyze-code", method: .post, requiresAuth: true, body: body)
+    }
+}

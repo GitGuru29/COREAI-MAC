@@ -15,7 +15,8 @@ struct CoreAI_MacApp: App {
                 viewModel: SettingsViewModel(
                     coreAIService: dependencies.coreAIService,
                     settingsStore: dependencies.settingsStore,
-                    keychainService: dependencies.keychainService
+                    keychainService: dependencies.keychainService,
+                    connectionMonitorService: dependencies.connectionMonitorService
                 )
             )
         }
