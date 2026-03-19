@@ -1,0 +1,82 @@
+import SwiftUI
+
+struct RootView: View {
+    @StateObject private var rootViewModel: RootViewModel
+    @StateObject private var dashboardViewModel: DashboardViewModel
+    @StateObject private var modelsViewModel: ModelsViewModel
+    @StateObject private var chatViewModel: ChatViewModel
+    @StateObject private var settingsViewModel: SettingsViewModel
+
+    init(dependencies: AppDependencies) {
+        _rootViewModel = StateObject(
+            wrappedValue: RootViewModel(
+                settingsStore: dependencies.settingsStore,
+                keychainService: dependencies.keychainService
+            )
+        )
+        _dashboardViewModel = StateObject(
+            wrappedValue: DashboardViewModel(coreAIService: dependencies.coreAIService)
+        )
+        _modelsViewModel = StateObject(
+            wrappedValue: ModelsViewModel(
+                coreAIService: dependencies.coreAIService,
+                settingsStore: dependencies.settingsStore
+            )
+        )
+        _chatViewModel = StateObject(
+            wrappedValue: ChatViewModel(
+                coreAIService: dependencies.coreAIService,
+                settingsStore: dependencies.settingsStore
+            )
+        )
+        _settingsViewModel = StateObject(
+            wrappedValue: SettingsViewModel(
+                coreAIService: dependencies.coreAIService,
+                settingsStore: dependencies.settingsStore,
+                keychainService: dependencies.keychainService
+            )
+        )
+    }
+
+    var body: some View {
+        NavigationSplitView {
+            List(AppRoute.allCases, selection: $rootViewModel.selectedRoute) { route in
+                Label(route.title, systemImage: route.systemImage)
+                    .tag(route)
+            }
+            .navigationTitle("CoreAI Mac")
+        } detail: {
+            VStack(spacing: 0) {
+                if rootViewModel.requiresInitialSettings {
+                    ConnectionBanner(
+                        style: .warning,
+                        title: "Settings Required",
+                        message: rootViewModel.configurationMessage
+                    )
+                    .padding([.top, .horizontal])
+                }
+
+                Group {
+                    switch rootViewModel.selectedRoute ?? .dashboard {
+                    case .dashboard:
+                        DashboardView(viewModel: dashboardViewModel)
+                    case .models:
+                        ModelsView(viewModel: modelsViewModel)
+                    case .chat:
+                        ChatView(viewModel: chatViewModel)
+                    case .settings:
+                        SettingsView(viewModel: settingsViewModel)
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .frame(minWidth: 980, minHeight: 680)
+        .task {
+            rootViewModel.refreshConfigurationState()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
+            rootViewModel.refreshConfigurationState()
+        }
+    }
+}
