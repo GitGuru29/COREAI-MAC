@@ -12,7 +12,7 @@ struct ComposerSurfaceView: View {
     @State private var showsAdvancedOptions = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Button {
                     withAnimation(.easeInOut(duration: 0.18)) {
@@ -33,13 +33,13 @@ struct ComposerSurfaceView: View {
             }
 
             if showsAdvancedOptions {
-                HStack(spacing: 10) {
+                HStack(spacing: 8) {
                     TextField("System prompt (optional)", text: $systemPrompt)
                         .textFieldStyle(.roundedBorder)
 
                     TextField("Keep alive", text: $keepAlive)
                         .textFieldStyle(.roundedBorder)
-                        .frame(width: 120)
+                        .frame(width: 108)
                 }
                 .transition(.move(edge: .top).combined(with: .opacity))
             }
@@ -50,14 +50,14 @@ struct ComposerSurfaceView: View {
                     placeholder: "Ask something…",
                     onSubmit: onSend
                 )
-                .frame(minHeight: 82, maxHeight: 150)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                .frame(minHeight: 64, maxHeight: 110)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
                 .background(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
                         .fill(Color.primary.opacity(0.035))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            RoundedRectangle(cornerRadius: 22, style: .continuous)
                                 .fill(
                                     LinearGradient(
                                         colors: [
@@ -71,17 +71,17 @@ struct ComposerSurfaceView: View {
                         )
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
                         .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
                 )
-                .shadow(color: Color.black.opacity(0.10), radius: 10, y: 4)
+                .shadow(color: Color.black.opacity(0.08), radius: 8, y: 3)
 
                 HStack(spacing: 8) {
                     floatingAccessory(systemImage: "plus")
                     floatingAccessory(systemImage: "paperclip")
                 }
-                .padding(.leading, 12)
-                .padding(.bottom, 12)
+                .padding(.leading, 10)
+                .padding(.bottom, 10)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
 
                 Button {
@@ -89,7 +89,7 @@ struct ComposerSurfaceView: View {
                 } label: {
                     Image(systemName: "arrow.up")
                         .font(.body.weight(.bold))
-                        .frame(width: 44, height: 44)
+                        .frame(width: 40, height: 40)
                 }
                 .buttonStyle(.plain)
                 .background(
@@ -109,7 +109,7 @@ struct ComposerSurfaceView: View {
                 .shadow(color: Color.cyan.opacity(0.28), radius: 14, y: 4)
                 .disabled(!canSend || isSending)
                 .opacity(canSend && !isSending ? 1 : 0.55)
-                .padding(10)
+                .padding(8)
             }
 
             HStack {
@@ -120,12 +120,12 @@ struct ComposerSurfaceView: View {
                 }
             }
         }
-        .padding(16)
+        .padding(12)
         .background(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .fill(.ultraThinMaterial)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
                         .fill(
                             LinearGradient(
                                 colors: [
@@ -139,17 +139,17 @@ struct ComposerSurfaceView: View {
                 )
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
         )
-        .shadow(color: Color.black.opacity(0.18), radius: 20, y: 12)
+        .shadow(color: Color.black.opacity(0.16), radius: 16, y: 8)
     }
 
     private func floatingAccessory(systemImage: String) -> some View {
         Image(systemName: systemImage)
             .font(.system(size: 12, weight: .semibold))
             .foregroundStyle(.secondary)
-            .frame(width: 28, height: 28)
+            .frame(width: 24, height: 24)
             .background(Color.white.opacity(0.04), in: Circle())
             .overlay(
                 Circle()

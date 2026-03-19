@@ -30,6 +30,28 @@ struct ConversationSurfaceView: View {
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
                     .strokeBorder(Color.white.opacity(0.05), lineWidth: 1)
             )
+            .overlay(alignment: .bottomTrailing) {
+                if !messages.isEmpty {
+                    Button {
+                        scrollToLatest(proxy: proxy)
+                    } label: {
+                        Label("Latest", systemImage: "arrow.down.circle.fill")
+                            .font(.caption.weight(.semibold))
+                            .labelStyle(.titleAndIcon)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 9)
+                    }
+                    .buttonStyle(.plain)
+                    .background(.ultraThinMaterial, in: Capsule())
+                    .overlay(
+                        Capsule()
+                            .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                    )
+                    .shadow(color: Color.black.opacity(0.18), radius: 10, y: 4)
+                    .padding(.trailing, 16)
+                    .padding(.bottom, 16)
+                }
+            }
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
             .shadow(color: Color.black.opacity(0.16), radius: 26, y: 12)
             .onChange(of: messages.count) { _, _ in

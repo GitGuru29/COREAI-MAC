@@ -21,7 +21,7 @@ struct ComposerTextView: NSViewRepresentable {
         textView.isAutomaticLinkDetectionEnabled = false
         textView.isAutomaticTextCompletionEnabled = false
         textView.font = .systemFont(ofSize: NSFont.systemFontSize)
-        textView.textContainerInset = NSSize(width: 0, height: 10)
+        textView.textContainerInset = NSSize(width: 0, height: 6)
         textView.submitHandler = onSubmit
         textView.placeholder = placeholder
 
@@ -98,7 +98,7 @@ private final class SubmitTextView: NSTextView {
             .font: NSFont.systemFont(ofSize: NSFont.systemFontSize)
         ]
 
-        let rect = NSRect(x: 5, y: 12, width: bounds.width - 10, height: 20)
+        let rect = NSRect(x: 5, y: 8, width: bounds.width - 10, height: 20)
         placeholder.draw(in: rect, withAttributes: attributes)
     }
 }
