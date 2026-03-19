@@ -10,6 +10,7 @@ final class ChatViewModel: ObservableObject {
     @Published var keepAlive = "5m"
     @Published var availableModels: [ModelInfo] = []
     @Published var response: ChatResponse?
+    @Published var messages: [ChatMessage] = []
     @Published var isSending = false
     @Published var isLoadingModels = false
     @Published var errorMessage: String?
@@ -33,6 +34,10 @@ final class ChatViewModel: ObservableObject {
         !prompt.trimmed.isEmpty &&
         characterCount <= maxPromptChars &&
         !selectedModel.trimmed.isEmpty
+    }
+
+    var hasConversation: Bool {
+        !messages.isEmpty
     }
 
     func load() async {
@@ -80,6 +85,24 @@ final class ChatViewModel: ObservableObject {
         isSending = true
         errorMessage = nil
 
+        let assistantMessageID = UUID()
+        messages.append(
+            ChatMessage(
+                role: .user,
+                text: trimmedPrompt,
+                state: .completed
+            )
+        )
+        messages.append(
+            ChatMessage(
+                id: assistantMessageID,
+                role: .assistant,
+                text: "",
+                state: .loading
+            )
+        )
+        prompt = ""
+
         let request = ChatRequest(
             prompt: trimmedPrompt,
             model: selectedModel,
@@ -89,12 +112,34 @@ final class ChatViewModel: ObservableObject {
         )
 
         do {
-            response = try await coreAIService.sendChat(request)
+            let response = try await coreAIService.sendChat(request)
+            self.response = response
+            updateAssistantMessage(
+                id: assistantMessageID,
+                text: response.response,
+                state: .completed,
+                metadata: ChatMessageMetadata(response: response)
+            )
         } catch {
-            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            updateAssistantMessage(
+                id: assistantMessageID,
+                text: message,
+                state: .error(message),
+                metadata: nil
+            )
         }
 
         isSending = false
+    }
+
+    func updateStreamingText(_ text: String, for id: UUID) {
+        updateAssistantMessage(
+            id: id,
+            text: text,
+            state: .streaming,
+            metadata: nil
+        )
     }
 
     func clear() {
@@ -104,7 +149,28 @@ final class ChatViewModel: ObservableObject {
         errorMessage = nil
     }
 
+    func clearConversation() {
+        messages.removeAll()
+        response = nil
+        errorMessage = nil
+    }
+
     func persistSelectedModel() {
         settingsStore.savePreferredModel(selectedModel)
+    }
+
+    private func updateAssistantMessage(
+        id: UUID,
+        text: String,
+        state: ChatMessageState,
+        metadata: ChatMessageMetadata?
+    ) {
+        guard let index = messages.firstIndex(where: { $0.id == id }) else {
+            return
+        }
+
+        messages[index].text = text
+        messages[index].state = state
+        messages[index].metadata = metadata
     }
 }

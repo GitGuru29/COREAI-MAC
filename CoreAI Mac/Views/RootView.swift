@@ -40,11 +40,10 @@ struct RootView: View {
 
     var body: some View {
         NavigationSplitView {
-            List(AppRoute.allCases, selection: $rootViewModel.selectedRoute) { route in
-                Label(route.title, systemImage: route.systemImage)
-                    .tag(route)
-            }
-            .navigationTitle("CoreAI Mac")
+            PremiumSidebarView(
+                selection: $rootViewModel.selectedRoute,
+                requiresInitialSettings: rootViewModel.requiresInitialSettings
+            )
         } detail: {
             VStack(spacing: 0) {
                 if rootViewModel.requiresInitialSettings {
