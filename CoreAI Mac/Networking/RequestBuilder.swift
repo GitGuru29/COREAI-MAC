@@ -1,7 +1,7 @@
 import Foundation
 
 struct RequestBuilder {
-    static let requestTimeout: TimeInterval = 300
+    static let requestTimeout: TimeInterval = 600  // 10 min — max idle time between chunks
 
     let settingsStore: SettingsStore
     let keychainService: KeychainService
