@@ -31,9 +31,7 @@ final class DashboardViewModel: ObservableObject {
     }
 
     func load() async {
-        if healthStatus == nil && serverInfo == nil {
-            await refresh()
-        }
+        await refresh()
     }
 
     func refresh() async {

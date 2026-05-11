@@ -15,6 +15,7 @@ final class AnalyzeCodeViewModel: ObservableObject {
     @Published var lastLanguage = ""
     @Published var lastTask = ""
     @Published var elapsedSeconds = 0
+    @Published var availableModels: [ModelInfo] = []
 
     private let coreAIService: CoreAIService
     private let settingsStore: SettingsStore
@@ -25,6 +26,23 @@ final class AnalyzeCodeViewModel: ObservableObject {
         self.coreAIService = coreAIService
         self.settingsStore = settingsStore
         self.selectedModel = settingsStore.loadSettings().preferredModel
+    }
+
+    func load() async {
+        await refreshModels()
+    }
+
+    func refreshModels() async {
+        do {
+            let response = try await coreAIService.fetchModels()
+            availableModels = response.models
+
+            if !availableModels.contains(where: { $0.name == selectedModel }) {
+                selectedModel = availableModels.first?.name ?? settingsStore.loadSettings().preferredModel
+            }
+        } catch {
+            // Silently ignore errors for background refresh
+        }
     }
 
     var characterCount: Int { sourceText.count }

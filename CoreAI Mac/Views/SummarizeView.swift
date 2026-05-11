@@ -10,8 +10,9 @@ struct SummarizeView: View {
                     VStack(alignment: .leading, spacing: 14) {
                         HStack {
                             Picker("Model", selection: $viewModel.selectedModel) {
-                                Text("qwen2.5-coder:7b").tag("qwen2.5-coder:7b")
-                                Text("llama3.2:latest").tag("llama3.2:latest")
+                                ForEach(viewModel.availableModels) { model in
+                                    Text(model.name).tag(model.name)
+                                }
                             }
                             .pickerStyle(.menu)
 
@@ -81,5 +82,8 @@ struct SummarizeView: View {
             .padding(24)
         }
         .navigationTitle("Summarize")
+        .task {
+            await viewModel.load()
+        }
     }
 }

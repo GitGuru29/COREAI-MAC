@@ -18,9 +18,7 @@ final class ModelsViewModel: ObservableObject {
     }
 
     func load() async {
-        if models.isEmpty {
-            await refresh()
-        }
+        await refresh()
     }
 
     func refresh() async {

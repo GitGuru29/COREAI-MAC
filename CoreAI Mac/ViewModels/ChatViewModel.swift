@@ -48,9 +48,7 @@ final class ChatViewModel: ObservableObject {
     }
 
     func load() async {
-        if availableModels.isEmpty {
-            await refreshModels()
-        }
+        await refreshModels()
     }
 
     func refreshModels() async {
