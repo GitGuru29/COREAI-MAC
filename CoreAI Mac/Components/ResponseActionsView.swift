@@ -2,17 +2,18 @@ import AppKit
 import SwiftUI
 
 struct ResponseActionsView: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     let text: String
-    let isHovering: Bool
     @State private var copied = false
     @State private var thumbsUp = false
     @State private var thumbsDown = false
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 10) {
             actionButton(
                 systemImage: thumbsUp ? "hand.thumbsup.fill" : "hand.thumbsup",
-                label: "Helpful",
+                label: "Like",
                 active: thumbsUp
             ) {
                 withAnimation(.spring(response: 0.28, dampingFraction: 0.6)) {
@@ -23,7 +24,7 @@ struct ResponseActionsView: View {
 
             actionButton(
                 systemImage: thumbsDown ? "hand.thumbsdown.fill" : "hand.thumbsdown",
-                label: "Not helpful",
+                label: "Dislike",
                 active: thumbsDown
             ) {
                 withAnimation(.spring(response: 0.28, dampingFraction: 0.6)) {
@@ -34,7 +35,7 @@ struct ResponseActionsView: View {
 
             Divider()
                 .frame(height: 14)
-                .opacity(0.4)
+                .opacity(0.55)
                 .padding(.horizontal, 2)
 
             actionButton(
@@ -53,9 +54,20 @@ struct ResponseActionsView: View {
                 }
             }
         }
-        .opacity(isHovering ? 1 : 0)
-        .offset(y: isHovering ? 0 : 4)
-        .animation(.easeOut(duration: 0.18), value: isHovering)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .fixedSize(horizontal: false, vertical: true)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(colorScheme == .dark ? Color.white.opacity(0.10) : Color.white.opacity(0.88))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(colorScheme == .dark ? Color.cyan.opacity(0.28) : Color.black.opacity(0.10), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.22 : 0.08), radius: 10, y: 4)
+        .zIndex(1)
     }
 
     private func actionButton(
@@ -65,21 +77,36 @@ struct ResponseActionsView: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            Image(systemName: systemImage)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(active ? Color.cyan : Color.secondary)
-                .frame(width: 28, height: 28)
-                .background(
-                    Circle()
-                        .fill(active ? Color.cyan.opacity(0.12) : Color.primary.opacity(0.05))
-                )
-                .overlay(
-                    Circle()
-                        .strokeBorder(active ? Color.cyan.opacity(0.25) : Color.white.opacity(0.05), lineWidth: 1)
-                )
+            HStack(spacing: 6) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 12, weight: .semibold))
+                Text(label)
+                    .font(.system(size: 12, weight: .semibold))
+            }
+            .foregroundStyle(active ? Color.cyan : Color.primary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                Capsule()
+                    .fill(active ? Color.cyan.opacity(0.24) : buttonBackgroundColor)
+            )
+            .overlay(
+                Capsule()
+                    .strokeBorder(active ? Color.cyan.opacity(0.40) : buttonBorderColor, lineWidth: 1.2)
+            )
         }
         .buttonStyle(.plain)
         .help(label)
-        .scaleEffect(active ? 1.08 : 1)
+        .contentShape(Capsule())
+        .scaleEffect(active ? 1.03 : 1)
+        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.20 : 0.08), radius: 6, y: 2)
+    }
+
+    private var buttonBackgroundColor: Color {
+        colorScheme == .dark ? Color.white.opacity(0.18) : Color.white.opacity(0.98)
+    }
+
+    private var buttonBorderColor: Color {
+        colorScheme == .dark ? Color.white.opacity(0.22) : Color.black.opacity(0.10)
     }
 }

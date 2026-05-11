@@ -7,10 +7,21 @@ final class APIClient {
     private let encoder: JSONEncoder
     private let decoder: JSONDecoder
 
+    /// A dedicated session tuned for long-running LLM generations:
+    /// - `timeoutIntervalForRequest` matches RequestBuilder (300 s) — time to receive *any* data.
+    /// - `timeoutIntervalForResource` = 0 — **unlimited** total transfer time so a large
+    ///   generation is never killed mid-stream by the OS resource watchdog.
+    static let longRunningSession: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = RequestBuilder.requestTimeout
+        config.timeoutIntervalForResource = 0  // unlimited — let keepAlive control the session
+        return URLSession(configuration: config)
+    }()
+
     init(
         settingsStore: SettingsStore,
         keychainService: KeychainService,
-        session: URLSession = .shared
+        session: URLSession = APIClient.longRunningSession
     ) {
         self.settingsStore = settingsStore
         self.keychainService = keychainService
