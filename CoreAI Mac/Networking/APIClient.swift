@@ -7,14 +7,19 @@ final class APIClient {
     private let encoder: JSONEncoder
     private let decoder: JSONDecoder
 
-    /// A dedicated session tuned for long-running LLM generations:
-    /// - `timeoutIntervalForRequest` matches RequestBuilder (300 s) — time to receive *any* data.
-    /// - `timeoutIntervalForResource` = 0 — **unlimited** total transfer time so a large
-    ///   generation is never killed mid-stream by the OS resource watchdog.
+    /// A dedicated session tuned for long-running LLM streaming across a local network.
+    ///
+    /// Key settings:
+    /// - `timeoutIntervalForRequest`  = requestTimeout (600 s) — max idle gap between any two bytes.
+    /// - `timeoutIntervalForResource` = 0              — **unlimited** total transfer time; a large
+    ///   generation is never killed by the OS resource watchdog.
+    /// - `waitsForConnectivity`       = true           — queue the request instead of failing
+    ///   immediately when the interface is briefly unavailable (e.g. Wi-Fi roam).
     static let longRunningSession: URLSession = {
         let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = RequestBuilder.requestTimeout
-        config.timeoutIntervalForResource = 0  // unlimited — let keepAlive control the session
+        config.timeoutIntervalForRequest  = RequestBuilder.requestTimeout
+        config.timeoutIntervalForResource = 0      // unlimited — never kill a long generation
+        config.waitsForConnectivity       = true   // survive brief Wi-Fi blips instead of failing
         return URLSession(configuration: config)
     }()
 

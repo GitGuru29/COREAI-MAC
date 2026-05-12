@@ -82,7 +82,6 @@ final class AnalyzeCodeViewModel: ObservableObject {
         let prefersStreaming = settingsStore.loadSettings().streamingEnabledByDefault
         if prefersStreaming {
             isStreaming = true
-            let previousOutput = outputText
             streamTask = Task {
                 do {
                     let stream = try coreAIService.streamAnalyzeCode(request)
@@ -99,9 +98,7 @@ final class AnalyzeCodeViewModel: ObservableObject {
                 } catch is CancellationError {
                     finishRun(cancelled: true)
                 } catch {
-                    if outputText.isEmpty {
-                        outputText = previousOutput
-                    }
+                    // Preserve any partial output that was streamed before the error.
                     errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
                     finishRun()
                 }

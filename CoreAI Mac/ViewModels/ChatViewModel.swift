@@ -138,9 +138,13 @@ final class ChatViewModel: ObservableObject {
         if prefersStreaming {
             do {
                 var fullText = ""
+                var streamCompletedNormally = false
+                var lastEvent: ChatStreamEvent?
                 let stream = try coreAIService.streamChat(request)
                 for try await event in stream {
                     fullText += event.chunk
+                    lastEvent = event
+                    if event.done { streamCompletedNormally = true }
                     updateAssistantMessage(
                         id: assistantMessageID,
                         text: fullText,
@@ -160,10 +164,32 @@ final class ChatViewModel: ObservableObject {
                         )) : nil
                     )
                 }
-                finalizeSuccessfulConversation(
-                    userPrompt: trimmedPrompt,
-                    assistantText: messages.first(where: { $0.id == assistantMessageID })?.text ?? ""
-                )
+
+                let finalText = messages.first(where: { $0.id == assistantMessageID })?.text ?? fullText
+
+                // Normal end: server stream finished cleanly without throwing an error.
+                if messages.first(where: { $0.id == assistantMessageID })?.state != .completed {
+                    updateAssistantMessage(
+                        id: assistantMessageID,
+                        text: finalText,
+                        state: .completed,
+                        metadata: ChatMessageMetadata(response: ChatResponse(
+                            model: lastEvent?.model ?? request.model,
+                            response: finalText,
+                            done: true,
+                            doneReason: lastEvent?.doneReason ?? "stop",
+                            createdAt: lastEvent?.createdAt ?? "",
+                            totalDuration: lastEvent?.totalDuration,
+                            loadDuration: lastEvent?.loadDuration,
+                            promptEvalCount: lastEvent?.promptEvalCount,
+                            evalCount: lastEvent?.evalCount,
+                            promptEvalDuration: nil,
+                            evalDuration: nil
+                        ))
+                    )
+                }
+                finalizeSuccessfulConversation(userPrompt: trimmedPrompt, assistantText: finalText)
+
             } catch {
                 let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
                 let partial = messages.first(where: { $0.id == assistantMessageID })?.text ?? ""
