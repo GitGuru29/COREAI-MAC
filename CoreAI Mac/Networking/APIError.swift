@@ -29,7 +29,7 @@ enum APIError: LocalizedError {
         case .decodingFailed:
             return "The response could not be decoded."
         case .requestTimedOut:
-            return "The request timed out after 5 minutes. The model host is responding too slowly for the current request."
+            return "The request timed out after 30 minutes. The model host is responding too slowly for the current request."
         case .transportError(let message):
             return message
         case .serverError(_, let backend):

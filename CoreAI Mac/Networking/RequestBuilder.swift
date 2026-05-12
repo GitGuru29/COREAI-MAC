@@ -1,7 +1,7 @@
 import Foundation
 
 struct RequestBuilder {
-    static let requestTimeout: TimeInterval = 600  // 10 min — max idle time between chunks
+    static let requestTimeout: TimeInterval = 1800  // 30 min — match Linux backend OLLAMA_TIMEOUT
 
     let settingsStore: SettingsStore
     let keychainService: KeychainService
@@ -11,7 +11,8 @@ struct RequestBuilder {
             path: endpoint.path,
             method: endpoint.method,
             requiresAuth: endpoint.requiresAuth,
-            body: endpoint.body
+            body: endpoint.body,
+            isStreaming: false
         )
     }
 
@@ -20,7 +21,8 @@ struct RequestBuilder {
             path: endpoint.path,
             method: endpoint.method,
             requiresAuth: endpoint.requiresAuth,
-            body: endpoint.body
+            body: endpoint.body,
+            isStreaming: true
         )
     }
 
@@ -28,7 +30,8 @@ struct RequestBuilder {
         path: String,
         method: HTTPMethod,
         requiresAuth: Bool,
-        body: Data?
+        body: Data?,
+        isStreaming: Bool
     ) throws -> URLRequest {
         let settings = settingsStore.loadSettings()
         let trimmedBaseURL = settings.baseURL.trimmed
@@ -50,7 +53,14 @@ struct RequestBuilder {
         request.httpMethod = method.rawValue
         request.httpBody = body
         request.timeoutInterval = Self.requestTimeout
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        
+        if isStreaming {
+            request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
+            request.setValue("keep-alive", forHTTPHeaderField: "Connection")
+            request.setValue("no-cache", forHTTPHeaderField: "Cache-Control")
+        } else {
+            request.setValue("application/json", forHTTPHeaderField: "Accept")
+        }
 
         if body != nil {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")

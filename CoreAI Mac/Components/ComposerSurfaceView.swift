@@ -33,12 +33,20 @@ struct ComposerSurfaceView: View {
 
             // Main composer area
             VStack(spacing: 0) {
-                // Text field
-                ComposerTextView(
-                    text: $text,
-                    placeholder: "Message CoreAI…",
-                    onSubmit: onSend
-                )
+                // Text field with loading overlay
+                ZStack(alignment: .center) {
+                    ComposerTextView(
+                        text: $text,
+                        placeholder: isSending ? "" : "Message CoreAI…",
+                        onSubmit: onSend
+                    )
+                    .opacity(isSending ? 0.3 : 1.0)
+                    .disabled(isSending)
+                    
+                    if isSending {
+                        LoadingIndicatorView(title: "Generating…")
+                    }
+                }
                 .frame(minHeight: 52, maxHeight: 130)
                 .padding(.horizontal, 18)
                 .padding(.top, 14)
@@ -85,13 +93,8 @@ struct ComposerSurfaceView: View {
 
                     Spacer()
 
-                    // Right: generating indicator or send button
-                    if isSending {
-                        LoadingIndicatorView(title: "Generating")
-                            .transition(.opacity)
-                    } else {
-                        sendButton
-                    }
+                    // Right: send button (automatically disabled while generating)
+                    sendButton
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
