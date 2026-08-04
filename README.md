@@ -1,48 +1,57 @@
 # CoreAI Mac
 
-CoreAI Mac is a native macOS application designed to seamlessly interact with locally hosted Large Language Models (LLMs). Built with Swift and modern Apple frameworks, it provides a highly polished, responsive interface for managing conversations, analyzing code, and streaming LLM responses in real-time.
+CoreAI Mac is a native macOS application for interacting with locally hosted large language models (LLMs). Built with Swift and SwiftUI, it provides a polished desktop experience for chat, code analysis, and content summarization with real-time streamed responses.
 
-## Features
+## Overview
 
-- **Local LLM Integration:** Automatically discovers and connects to locally installed LLMs (e.g., via Ollama).
-- **Real-Time Streaming:** Robust Server-Sent Events (SSE) parsing for smooth, character-by-character text generation.
-- **Modern Native UI:** Built with SwiftUI, featuring dynamic interactions, generating states, and response action controls (Like, Dislike, Copy).
-- **Specialized Workflows:** Dedicated views and models for chatting, code analysis, and content summarization.
+The app connects to local LLM backends such as Ollama and offers a streamlined workflow for:
+
+- chatting with local models
+- analyzing code snippets or repository content
+- summarizing text and responses
+- monitoring connection health and model availability
+
+## Tech Stack
+
+- Swift 5
+- SwiftUI
+- Combine
+- macOS-native UI
+- Server-Sent Events (SSE) for streaming responses
+- MVVM architecture
 
 ## Project Structure
 
-The project follows an MVVM (Model-View-ViewModel) architecture:
+- App/: app entry point and dependency wiring
+- Components/: reusable SwiftUI UI components
+- Models/: request, response, and settings models
+- Services/: core application services such as networking and persistence
+- ViewModels/: app logic and state management
+- Views/: main screens and user flows
+- Networking/: API clients and streaming endpoints
 
-- `App/`: Application entry point and lifecycle management.
-- `Components/`: Reusable UI elements (e.g., `ComposerSurfaceView`, `ConversationSurfaceView`).
-- `Models/`: Data structures representing conversations, messages, and model configurations.
-- `ViewModels/`: Business logic bridging the models and views (e.g., `ChatViewModel`, `AnalyzeCodeViewModel`, `SummarizeViewModel`).
-- `Services/`: Core functionality layers, such as networking and stream parsing.
-- `Networking/`: API clients for interacting with the local LLM servers.
-- `Views/`: Main screens of the application.
+## Features
+
+- Native macOS experience with a modern interface
+- Local model discovery and connection handling
+- Real-time streaming of AI responses
+- Dedicated workflows for chat, analysis, and summarization
+- Settings and connection monitoring support
 
 ## Requirements
 
-- macOS 14.0+ (or as specified in the Xcode project)
-- Xcode 15.0+
+- macOS 14+
+- Xcode 15+
 - Swift 5.9+
-- A local LLM server (like [Ollama](https://ollama.com/)) running on your machine.
+- A local LLM backend such as Ollama running on the machine
 
-## Installation & Setup
+## Getting Started
 
-1. **Clone the repository:**
-   ```bash
-   git clone <repository-url>
-   ```
-2. **Open the project:**
-   Open `CoreAI Mac.xcodeproj` in Xcode.
-3. **Build and Run:**
-   Select your target Mac and press `Cmd + R` to build and run the application.
-
-## Usage
-
-Ensure your local LLM backend (e.g., Ollama) is active and serving models. CoreAI Mac will attempt to discover available models on launch. Select a model from the settings or chat interface, and begin sending prompts!
+1. Clone the repository.
+2. Open CoreAI Mac.xcodeproj in Xcode.
+3. Build and run the app on macOS.
+4. Ensure your local LLM backend is running and available.
 
 ## License
 
-Please see the [LICENSE](LICENSE) file for more details.
+This project is licensed under the MIT License. See the LICENSE file for details.
